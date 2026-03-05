@@ -6,8 +6,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Set global prefix for all routes
-  app.setGlobalPrefix('api');
 
   // Swagger / OpenAPI setup
   const config = new DocumentBuilder()
@@ -30,7 +28,7 @@ async function bootstrap() {
         type: 'oauth2',
         flows: {
           implicit: {
-            authorizationUrl: `${process.env.API_URL || 'http://localhost:3000'}/api/auth/google`,
+            authorizationUrl: `${process.env.API_URL || 'http://localhost:3000'}/auth/google`,
             scopes: {
               'email profile': 'Get email and profile info',
             },
