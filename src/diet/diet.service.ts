@@ -72,15 +72,18 @@ export class DietService {
 
     async getTodayDiet(userId: string) {
         const today = new Date().toISOString().split('T')[0];
-        return this.prisma.dietSuggestion.findFirst({
-            where: {
-                userId,
-                date: today,
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
+
+        // Return cached suggestion if one already exists for today
+        const existing = await this.prisma.dietSuggestion.findFirst({
+            where: { userId, date: today },
+            orderBy: { createdAt: 'desc' },
         });
+        if (existing) return existing;
+
+        // No suggestion yet — generate one from AI and persist it
+        console.log(`[DietService] No suggestion for ${today}, triggering AI generation for user ${userId}`);
+        const generated = await this.generateDietSuggestion(userId);
+        return generated ?? null;
     }
 
     async getMealsByDate(userId: string, date: string) {
