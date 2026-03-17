@@ -124,7 +124,7 @@ export class DietService {
                     acc.calories += item.calories || 0;
                     acc.protein += item.protein || 0;
                     acc.carbs += item.carbs || 0;
-                    acc.fat += item.fat || 0;
+                    acc.fat += item.fats || 0;
                     acc.fiber += item.fiber || 0;
                 });
                 return acc;
