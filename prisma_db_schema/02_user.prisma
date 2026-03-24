@@ -14,6 +14,7 @@ model User {
   profile         UserProfile?
   meals           Meal[]
   dietSuggestions DietSuggestion[]
+  sessions        Session[]
 
   @@map("users")
 }

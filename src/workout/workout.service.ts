@@ -3,6 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { TodayWorkoutResponseDto, WorkoutSessionDto } from './dto/today-workout.dto';
 import { SaveWorkoutPreferencesDto, WorkoutPreferencesResponseDto } from './dto/workout-preferences.dto';
 import { ExerciseListResponseDto } from './dto/exercise-list.dto';
+import { CreateSessionRequestDto } from './dto/create-session-request.dto';
+import { UpdateSessionRequestDto } from './dto/update-session-request.dto';
+import { SessionResponseDto } from './dto/session-response.dto';
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class WorkoutService {
@@ -204,6 +208,94 @@ export class WorkoutService {
             },
         });
         return profile;
+    }
+
+    // --- Session CRUD ---
+
+    async createSession(userId: string, dto: CreateSessionRequestDto): Promise<SessionResponseDto> {
+        return this.prisma.session.create({
+            data: {
+                userId,
+                name: dto.name,
+                category: dto.category,
+                sessionData: dto.sessionData,
+            },
+            select: {
+                id: true,
+                name: true,
+                category: true,
+                sessionData: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        }) as any;
+    }
+
+    async getSession(userId: string, id: number): Promise<SessionResponseDto> {
+        const session = await this.prisma.session.findFirst({
+            where: { id, userId },
+            select: {
+                id: true,
+                name: true,
+                category: true,
+                sessionData: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+
+        if (!session) {
+            throw new NotFoundException(`Session with ID ${id} not found`);
+        }
+
+        return session as any;
+    }
+
+    async getUserSessions(userId: string): Promise<SessionResponseDto[]> {
+        return this.prisma.session.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                name: true,
+                category: true,
+                sessionData: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        }) as any;
+    }
+
+    async updateSession(userId: string, id: number, dto: UpdateSessionRequestDto): Promise<SessionResponseDto> {
+        // Ensure ownership
+        await this.getSession(userId, id);
+
+        return this.prisma.session.update({
+            where: { id },
+            data: {
+                ...(dto.name !== undefined && { name: dto.name }),
+                ...(dto.category !== undefined && { category: dto.category }),
+                ...(dto.sessionData !== undefined && { sessionData: dto.sessionData }),
+                updatedAt: new Date(),
+            },
+            select: {
+                id: true,
+                name: true,
+                category: true,
+                sessionData: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        }) as any;
+    }
+
+    async deleteSession(userId: string, id: number): Promise<void> {
+        // Ensure ownership
+        await this.getSession(userId, id);
+
+        await this.prisma.session.delete({
+            where: { id },
+        });
     }
 }
 

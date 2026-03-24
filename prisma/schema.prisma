@@ -29,6 +29,7 @@ model User {
   profile         UserProfile?
   meals           Meal[]
   dietSuggestions DietSuggestion[]
+  sessions        Session[]
 
   @@map("users")
 }
@@ -149,4 +150,21 @@ model Exercise {
     updatedAt     DateTime @updatedAt @map("updated_at")
 
     @@map("exercises")
+}
+
+// Workout Session - stores target sets for multiple exercises in a single session
+model Session {
+    id          Int      @id @default(autoincrement())
+    userId      String   @map("user_id") @db.Uuid
+    name        String
+    // JSON containing categories as a list of strings
+    category    Json     @default("[]")
+    // JSON array of objects: { "exercise id": number, "setN": { "targetRep": number, "targetKg": number, "targetTime": number } }
+    sessionData Json     @map("session_data")
+    createdAt   DateTime @default(now()) @map("created_at")
+    updatedAt   DateTime @updatedAt @map("updated_at")
+
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("sessions")
 }
