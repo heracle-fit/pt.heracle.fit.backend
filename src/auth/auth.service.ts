@@ -9,6 +9,19 @@ export class AuthService {
 
 	constructor(private readonly jwtService: JwtService) { }
 
+	// Admin login using environment credentials
+	async adminLogin(dto: any) {
+		const adminUser = process.env.ADMIN_USERNAME || 'admin';
+		const adminPass = process.env.ADMIN_PASSWORD || 'admin_password_123';
+
+		if (dto.username === adminUser && dto.password === adminPass) {
+			const payload = { sub: 'admin-id', username: adminUser, role: 'admin' };
+			const token = this.jwtService.sign(payload);
+			return { user: { id: 'admin-id', username: adminUser, role: 'admin' }, token };
+		}
+		throw new UnauthorizedException('Invalid admin credentials');
+	}
+
 	// Find existing user by email or create a new one, then return a jwt + user
 	async validateOAuthLogin(profile: any) {
 		if (!profile || !profile.emails || !profile.emails.length) {
@@ -39,10 +52,14 @@ export class AuthService {
 			});
 		}
 
-		const payload = { sub: user.id, email: user.email, role: user.role };
+		// Determine role based on Trainer table
+		const trainer = await this.prisma.trainer.findUnique({ where: { userId: user.id } });
+		const role = trainer ? 'trainer' : 'user';
+
+		const payload = { sub: user.id, email: user.email, role: role };
 		const token = this.jwtService.sign(payload);
 
-		return { user, token };
+		return { user: { ...user, role }, token };
 	}
 
 	// Verify a Firebase ID token (issued by Firebase Auth on the mobile client)
@@ -73,6 +90,7 @@ export class AuthService {
 		// Reuse existing logic to find-or-create user and issue our JWT
 		return this.validateOAuthLogin(profileLike);
 	}
+
 
 	// Developer-only method to generate a token for an email without Firebase verification
 	async generateDevToken(email: string) {

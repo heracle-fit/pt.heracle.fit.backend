@@ -25,7 +25,25 @@ export class AuthController {
 		return result;
 	}
 
+	@Post('admin/login')
+	@Public()
+	@ApiOperation({ summary: 'Admin login with username and password' })
+	@ApiBody({
+		schema: {
+			type: 'object',
+			properties: {
+				username: { type: 'string' },
+				password: { type: 'string' },
+			},
+		},
+	})
+	async adminLogin(@Body() body: any) {
+		return this.authService.adminLogin(body);
+	}
+
 	@Get('dev/token')
+
+
 	@Public()
 	@ApiExcludeEndpoint()
 	@ApiOperation({ summary: 'Generate a dev JWT (Local/Dev Only)' })
@@ -34,5 +52,6 @@ export class AuthController {
 		const targetEmail = email || 'sanjaysagar.main@gmail.com';
 		return this.authService.generateDevToken(targetEmail);
 	}
+
 
 }

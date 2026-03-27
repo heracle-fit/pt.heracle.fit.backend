@@ -17,7 +17,6 @@ export class UserService {
 				email: true,
 				avatarUrl: true,
 				bio: true,
-				role: true,
 				createdAt: true,
 				updatedAt: true,
 			},

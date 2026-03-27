@@ -30,4 +30,6 @@ export class FirebaseModule implements OnModuleInit {
             this.logger.log('Firebase Admin SDK initialized from environment variables');
         }
     }
+
+
 }

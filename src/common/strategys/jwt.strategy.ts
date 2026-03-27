@@ -19,10 +19,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 		if (!payload || !payload.sub) {
 			throw new UnauthorizedException();
 		}
-		const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+
+		if (payload.sub === 'admin-id') {
+			return { id: 'admin-id', role: 'admin', username: payload.username };
+		}
+
+		const user = await this.prisma.user.findUnique({
+			where: { id: payload.sub }
+		});
+
 		if (!user) {
 			throw new UnauthorizedException();
 		}
-		return user;
+
+		// Attach role from JWT to the user object for guards
+		return { ...user, role: payload.role };
 	}
+
 }

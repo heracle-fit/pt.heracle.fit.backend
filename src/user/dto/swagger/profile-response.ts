@@ -19,9 +19,6 @@ export class ProfileResponseDto {
     @ApiPropertyOptional({ example: 'Athlete' })
     bio: string | null;
 
-    @ApiProperty({ example: 'Pro Member' })
-    role: string;
-
     @ApiProperty({ example: '2026-02-25T11:30:00.000Z' })
     createdAt: Date;
 

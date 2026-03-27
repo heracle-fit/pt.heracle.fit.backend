@@ -21,7 +21,6 @@ model User {
   bio       String?   @map("bio")
   avatarUrl String?   @map("avatar_url")
   email     String    @unique @map("email")
-  role      String    @default("user") @map("role")
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
 
@@ -33,7 +32,44 @@ model User {
   workoutLogs     WorkoutLog[]
   sleepCycles     SleepCycle[]
 
+  // Trainer relations
+  trainerProfile  Trainer?        @relation("UserToTrainerProfile")
+  trainerClient   TrainerClient?  @relation("UserClientOfTrainer")
+
   @@map("users")
+}
+
+
+
+model Trainer {
+  id        String   @id @default(uuid()) @map("id") @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  user      User     @relation("UserToTrainerProfile", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Trainer data
+  specialization String? @map("specialization")
+  experience     Int?    @map("experience")
+  
+  // Relations
+  clients   TrainerClient[] @relation("TrainerToTrainerClient")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("trainers")
+}
+
+model TrainerClient {
+  id        String   @id @default(uuid()) @map("id") @db.Uuid
+  trainerId String   @map("trainer_id") @db.Uuid
+  clientId  String   @unique @map("client_id") @db.Uuid // Each user (client) has only 1 trainer
+  
+  trainer   Trainer  @relation("TrainerToTrainerClient", fields: [trainerId], references: [id], onDelete: Cascade)
+  client    User     @relation("UserClientOfTrainer", fields: [clientId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  @@map("trainer_clients")
 }
 
 

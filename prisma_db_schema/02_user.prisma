@@ -6,7 +6,6 @@ model User {
   bio       String?   @map("bio")
   avatarUrl String?   @map("avatar_url")
   email     String    @unique @map("email")
-  role      String    @default("user") @map("role")
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime? @map("updated_at")
 
@@ -18,5 +17,10 @@ model User {
   workoutLogs     WorkoutLog[]
   sleepCycles     SleepCycle[]
 
+  // Trainer relations
+  trainerProfile  Trainer?        @relation("UserToTrainerProfile")
+  trainerClient   TrainerClient?  @relation("UserClientOfTrainer")
+
   @@map("users")
 }
+
