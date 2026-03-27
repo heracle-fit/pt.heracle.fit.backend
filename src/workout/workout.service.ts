@@ -9,7 +9,8 @@ import { SessionResponseDto } from './dto/session-response.dto';
 import { CreateWorkoutLogRequestDto } from './dto/create-workout-log-request.dto';
 import { UpdateWorkoutLogRequestDto } from './dto/update-workout-log-request.dto';
 import { WorkoutLogResponseDto } from './dto/workout-log-response.dto';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+
 
 const EXERCISE_IMAGE_BASE_URL = 'https://r2.heracle.fit/exercises';
 
@@ -294,6 +295,120 @@ export class WorkoutService {
         }).then(res => ({ ...res, exerciseImageBaseUrl: EXERCISE_IMAGE_BASE_URL })) as any;
     }
 
+    async trainerUpdateSession(
+        trainerUserId: string,
+        clientId: string,
+        sessionId: number,
+        dto: UpdateSessionRequestDto,
+    ): Promise<SessionResponseDto> {
+        await this.verifyTrainerClient(trainerUserId, clientId);
+
+        // 3. Update the session for the client
+        const session = await this.prisma.session.findFirst({
+            where: { id: sessionId, userId: clientId },
+        });
+
+        if (!session) {
+            throw new NotFoundException(`Session with ID ${sessionId} not found for client ${clientId}`);
+        }
+
+        return this.prisma.session.update({
+            where: { id: sessionId },
+            data: {
+                ...(dto.name !== undefined && { name: dto.name }),
+                ...(dto.category !== undefined && { category: dto.category }),
+                ...(dto.sessionData !== undefined && { sessionData: dto.sessionData }),
+                updatedAt: new Date(),
+            },
+            select: {
+                id: true,
+                name: true,
+                category: true,
+                sessionData: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        }).then(res => ({ ...res, exerciseImageBaseUrl: EXERCISE_IMAGE_BASE_URL })) as any;
+    }
+
+    async trainerCreateSession(
+        trainerUserId: string,
+        clientId: string,
+        dto: CreateSessionRequestDto,
+    ): Promise<SessionResponseDto> {
+        await this.verifyTrainerClient(trainerUserId, clientId);
+
+        return this.prisma.session.create({
+            data: {
+                userId: clientId,
+                name: dto.name,
+                category: dto.category,
+                sessionData: dto.sessionData,
+            },
+            select: {
+                id: true,
+                name: true,
+                category: true,
+                sessionData: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        }).then(res => ({ ...res, exerciseImageBaseUrl: EXERCISE_IMAGE_BASE_URL })) as any;
+    }
+
+    async trainerGetSessions(trainerUserId: string, clientId: string): Promise<SessionResponseDto[]> {
+        await this.verifyTrainerClient(trainerUserId, clientId);
+
+        return this.prisma.session.findMany({
+            where: { userId: clientId },
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                name: true,
+                category: true,
+                sessionData: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        }).then(res => res.map(s => ({ ...s, exerciseImageBaseUrl: EXERCISE_IMAGE_BASE_URL }))) as any;
+    }
+
+    async trainerDeleteSession(trainerUserId: string, clientId: string, sessionId: number): Promise<void> {
+        await this.verifyTrainerClient(trainerUserId, clientId);
+
+        const session = await this.prisma.session.findFirst({
+            where: { id: sessionId, userId: clientId },
+        });
+
+        if (!session) {
+            throw new NotFoundException(`Session with ID ${sessionId} not found for client ${clientId}`);
+        }
+
+        await this.prisma.session.delete({
+            where: { id: sessionId },
+        });
+    }
+
+    private async verifyTrainerClient(trainerUserId: string, clientId: string) {
+        const trainer = await this.prisma.trainer.findUnique({
+            where: { userId: trainerUserId },
+        });
+
+        if (!trainer) {
+            throw new ForbiddenException('Trainer record not found for this user');
+        }
+
+        const assignment = await this.prisma.trainerClient.findUnique({
+            where: { clientId },
+        });
+
+        if (!assignment || assignment.trainerId !== trainer.id) {
+            throw new ForbiddenException('You are not assigned to this client');
+        }
+    }
+
+
+
     async deleteSession(userId: string, id: number): Promise<void> {
         // Ensure ownership
         await this.getSession(userId, id);
@@ -319,9 +434,11 @@ export class WorkoutService {
                 sessionId: true,
                 logData: true,
                 notes: true,
+                ptReview: true,
                 createdAt: true,
                 updatedAt: true,
             },
+
         }).then(res => ({ ...res, exerciseImageBaseUrl: EXERCISE_IMAGE_BASE_URL })) as any;
     }
 
@@ -334,10 +451,12 @@ export class WorkoutService {
                 sessionId: true,
                 logData: true,
                 notes: true,
+                ptReview: true,
                 createdAt: true,
                 updatedAt: true,
             },
         });
+
 
         if (!log) {
             throw new NotFoundException(`Workout log with ID ${id} not found`);
@@ -356,11 +475,13 @@ export class WorkoutService {
                 sessionId: true,
                 logData: true,
                 notes: true,
+                ptReview: true,
                 createdAt: true,
                 updatedAt: true,
             },
         }).then(res => res.map(l => ({ ...l, exerciseImageBaseUrl: EXERCISE_IMAGE_BASE_URL }))) as any;
     }
+
 
     async updateWorkoutLog(userId: string, id: number, dto: UpdateWorkoutLogRequestDto): Promise<WorkoutLogResponseDto> {
         // Ensure ownership
@@ -380,9 +501,11 @@ export class WorkoutService {
                 sessionId: true,
                 logData: true,
                 notes: true,
+                ptReview: true,
                 createdAt: true,
                 updatedAt: true,
             },
+
         }).then(res => ({ ...res, exerciseImageBaseUrl: EXERCISE_IMAGE_BASE_URL })) as any;
     }
 
@@ -394,5 +517,54 @@ export class WorkoutService {
             where: { id },
         });
     }
+
+    async trainerAddWorkoutLogReview(
+        trainerUserId: string,
+        logId: number,
+        review: string,
+    ): Promise<WorkoutLogResponseDto> {
+        // 1. Verify caller is a trainer
+        const trainer = await this.prisma.trainer.findUnique({
+            where: { userId: trainerUserId },
+        });
+
+        if (!trainer) {
+            throw new ForbiddenException('Trainer record not found for this user');
+        }
+
+        // 2. Fetch log and verify ownership/assignment
+        const log = await this.prisma.workoutLog.findUnique({
+            where: { id: logId },
+        });
+
+        if (!log) {
+            throw new NotFoundException(`Workout log with ID ${logId} not found`);
+        }
+
+        const assignment = await this.prisma.trainerClient.findUnique({
+            where: { clientId: log.userId },
+        });
+
+        if (!assignment || assignment.trainerId !== trainer.id) {
+            throw new ForbiddenException('You are not assigned to the owner of this log');
+        }
+
+        // 3. Save the review
+        return this.prisma.workoutLog.update({
+            where: { id: logId },
+            data: { ptReview: review },
+            select: {
+                id: true,
+                userId: true,
+                sessionId: true,
+                logData: true,
+                notes: true,
+                ptReview: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        }).then(res => ({ ...res, exerciseImageBaseUrl: EXERCISE_IMAGE_BASE_URL })) as any;
+    }
 }
+
 

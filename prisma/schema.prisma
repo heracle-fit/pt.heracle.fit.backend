@@ -216,7 +216,9 @@ model WorkoutLog {
     // JSON array of objects: { "exercise id": number, "setN": { "Rep": number, "Kg": number, "Time": number }, "note": string }
     logData   Json     @map("log_data")
     notes     String?
+    ptReview  String?  @map("pt_review")
     createdAt DateTime @default(now()) @map("created_at")
+
     updatedAt DateTime @updatedAt @map("updated_at")
 
     user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

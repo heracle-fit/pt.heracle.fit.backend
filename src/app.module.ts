@@ -10,6 +10,7 @@ import { FirebaseModule } from './firebase/firebase.module';
 import { WorkoutModule } from './workout/workout.module';
 import { DietModule } from './diet/diet.module';
 import { SleepModule } from './sleep/sleep.module';
+import { TrainerModule } from './trainer/trainer.module';
 
 @Module({
   imports: [
@@ -20,8 +21,10 @@ import { SleepModule } from './sleep/sleep.module';
     WorkoutModule,
     DietModule,
     SleepModule,
+    TrainerModule,
   ],
-  controllers: [AppController, UserController],
-  providers: [AppService, UserService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule { }
+

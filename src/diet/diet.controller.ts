@@ -3,11 +3,14 @@ import {
     Controller,
     Get,
     Post,
+    Patch,
+    Param,
     Req,
     Query,
     UploadedFile,
     UseInterceptors,
 } from '@nestjs/common';
+
 import {
     ApiBearerAuth,
     ApiBody,
@@ -28,6 +31,9 @@ import { AnalyseFoodResponseDto } from './dto/analyse-food-response.dto';
 import { DailyNutritionalStatusDto } from './dto/daily-nutritional-status.dto';
 import { DietSuggestionResponseDto } from './dto/diet-suggestion-response.dto';
 import { SearchFoodResponseDto } from './dto/search-food-response.dto';
+import { Trainer } from '../common/decorators/trainer.decorator';
+import { SaveTargetsDto, TargetsResponseDto } from '../user/dto/swagger/targets.dto';
+
 
 @ApiTags('Diet')
 @ApiBearerAuth('JWT')
@@ -131,4 +137,18 @@ export class DietController {
     ): Promise<AnalyseFoodResponseDto> {
         return this.dietService.analyseFood(body.description, image);
     }
+
+    @Patch('trainer/targets/:clientId')
+    @Trainer()
+    @ApiOperation({ summary: 'Edit a client diet targets (Trainer Only)' })
+    @ApiBody({ type: SaveTargetsDto })
+    @ApiOkResponse({ type: TargetsResponseDto })
+    async trainerUpdateTargets(
+        @Req() req: any,
+        @Param('clientId') clientId: string,
+        @Body() body: SaveTargetsDto,
+    ) {
+        return this.dietService.trainerUpdateTargets(req.user.id, clientId, body);
+    }
 }
+

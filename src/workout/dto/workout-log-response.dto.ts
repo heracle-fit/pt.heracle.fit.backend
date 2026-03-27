@@ -22,6 +22,10 @@ export class WorkoutLogResponseDto {
     @ApiProperty()
     createdAt: Date;
 
+    @ApiPropertyOptional()
+    ptReview: string | null;
+
     @ApiProperty()
     updatedAt: Date;
+
 }

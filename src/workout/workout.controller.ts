@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Trainer } from '../common/decorators/trainer.decorator';
+
 import { WorkoutService } from './workout.service';
 import { TodayWorkoutResponseDto, WorkoutSessionDto } from './dto/today-workout.dto';
 import { SaveWorkoutPreferencesDto, WorkoutPreferencesResponseDto } from './dto/workout-preferences.dto';
@@ -111,6 +113,58 @@ export class WorkoutController {
         return this.workoutService.deleteSession(req.user.id, +id);
     }
 
+    @Patch('trainer/session/:clientId/:sessionId')
+    @Trainer()
+    @ApiOperation({ summary: 'Edit a client session data (Trainer Only)' })
+    @ApiBody({ type: UpdateSessionRequestDto })
+    @ApiOkResponse({ type: SessionResponseDto })
+    async trainerUpdateSession(
+        @Req() req: any,
+        @Param('clientId') clientId: string,
+        @Param('sessionId') sessionId: string,
+        @Body() body: UpdateSessionRequestDto,
+    ): Promise<SessionResponseDto> {
+        return this.workoutService.trainerUpdateSession(req.user.id, clientId, +sessionId, body);
+    }
+
+    @Post('trainer/session/:clientId')
+    @Trainer()
+    @ApiOperation({ summary: 'Create a session for a client (Trainer Only)' })
+    @ApiBody({ type: CreateSessionRequestDto })
+    @ApiOkResponse({ type: SessionResponseDto })
+    async trainerCreateSession(
+        @Req() req: any,
+        @Param('clientId') clientId: string,
+        @Body() body: CreateSessionRequestDto,
+    ): Promise<SessionResponseDto> {
+        return this.workoutService.trainerCreateSession(req.user.id, clientId, body);
+    }
+
+    @Get('trainer/sessions/:clientId')
+    @Trainer()
+    @ApiOperation({ summary: "Get all sessions for a client (Trainer Only)" })
+    @ApiOkResponse({ type: [SessionResponseDto] })
+    async trainerGetSessions(
+        @Req() req: any,
+        @Param('clientId') clientId: string,
+    ): Promise<SessionResponseDto[]> {
+        return this.workoutService.trainerGetSessions(req.user.id, clientId);
+    }
+
+    @Delete('trainer/session/:clientId/:sessionId')
+    @Trainer()
+    @ApiOperation({ summary: 'Delete a client session (Trainer Only)' })
+    @ApiOkResponse({ description: 'Session deleted successfully' })
+    async trainerDeleteSession(
+        @Req() req: any,
+        @Param('clientId') clientId: string,
+        @Param('sessionId') sessionId: string,
+    ): Promise<void> {
+        return this.workoutService.trainerDeleteSession(req.user.id, clientId, +sessionId);
+    }
+
+
+
     // --- WorkoutLog CRUD ---
 
     @Post('log')
@@ -153,6 +207,28 @@ export class WorkoutController {
     async deleteWorkoutLog(@Req() req: any, @Param('id') id: string): Promise<void> {
         return this.workoutService.deleteWorkoutLog(req.user.id, +id);
     }
+
+    @Patch('trainer/log-review/:logId')
+    @Trainer()
+    @ApiOperation({ summary: 'Add a PT review to a client workout log (Trainer Only)' })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                review: { type: 'string' },
+            },
+            required: ['review'],
+        },
+    })
+    @ApiOkResponse({ type: WorkoutLogResponseDto })
+    async addWorkoutLogReview(
+        @Req() req: any,
+        @Param('logId') logId: string,
+        @Body('review') review: string,
+    ): Promise<WorkoutLogResponseDto> {
+        return this.workoutService.trainerAddWorkoutLogReview(req.user.id, +logId, review);
+    }
 }
+
 
 

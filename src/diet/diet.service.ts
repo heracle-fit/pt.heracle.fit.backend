@@ -1,6 +1,8 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, ServiceUnavailableException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SaveDietPreferencesDto } from './dto/diet-preferences.dto';
+import { SaveTargetsDto } from '../user/dto/swagger/targets.dto';
+
 import { LogMealRequestDto } from './dto/log-meal-request.dto';
 import { LogMealResponseDto } from './dto/log-meal-response.dto';
 import { AnalyseFoodResponseDto } from './dto/analyse-food-response.dto';
@@ -263,4 +265,50 @@ export class DietService {
             return null;
         }
     }
+
+    async trainerUpdateTargets(
+        trainerUserId: string,
+        clientId: string,
+        dto: SaveTargetsDto,
+    ) {
+        // 1. Verify caller is a trainer
+        const trainer = await this.prisma.trainer.findUnique({
+            where: { userId: trainerUserId },
+        });
+
+        if (!trainer) {
+            throw new ForbiddenException('Trainer record not found for this user');
+        }
+
+        // 2. Verify trainer-client relationship
+        const assignment = await this.prisma.trainerClient.findUnique({
+            where: { clientId },
+        });
+
+        if (!assignment || assignment.trainerId !== trainer.id) {
+            throw new ForbiddenException('You are not assigned to this client');
+        }
+
+        // 3. Update the targets for the client in UserProfile
+        return this.prisma.userProfile.update({
+            where: { userId: clientId },
+            data: {
+                ...(dto.targetCalories !== undefined && { targetCalories: dto.targetCalories }),
+                ...(dto.targetProtein !== undefined && { targetProtein: dto.targetProtein }),
+                ...(dto.targetCarbs !== undefined && { targetCarbs: dto.targetCarbs }),
+                ...(dto.targetFat !== undefined && { targetFat: dto.targetFat }),
+                ...(dto.targetFiber !== undefined && { targetFiber: dto.targetFiber }),
+                updatedAt: new Date(),
+            },
+            select: {
+                targetCalories: true,
+                targetProtein: true,
+                targetCarbs: true,
+                targetFat: true,
+                targetFiber: true,
+                updatedAt: true,
+            },
+        });
+    }
 }
+
