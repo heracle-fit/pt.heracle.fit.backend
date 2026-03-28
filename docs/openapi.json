@@ -1512,6 +1512,42 @@
         ]
       }
     },
+    "/trainer/client/{clientId}": {
+      "get": {
+        "operationId": "TrainerController_getClientDetails",
+        "parameters": [
+          {
+            "name": "clientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailedClientResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get detailed data for a specific client (Trainer Only)",
+        "tags": [
+          "Trainer"
+        ]
+      }
+    },
     "/trainer/clients/add": {
       "post": {
         "operationId": "TrainerController_addClient",
@@ -3101,6 +3137,95 @@
             "type": "number",
             "example": 0.75,
             "description": "Today's progress toward nutritional targets (0.0 to 1.0)"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "assignedAt",
+          "progress"
+        ]
+      },
+      "DetailedClientResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-..."
+          },
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "example": "john@example.com"
+          },
+          "avatarUrl": {
+            "type": "object",
+            "example": "https://example.com/avatar.jpg"
+          },
+          "assignedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "goal": {
+            "type": "object",
+            "example": "weight_loss"
+          },
+          "progress": {
+            "type": "number",
+            "example": 0.75,
+            "description": "Today's progress toward nutritional targets (0.0 to 1.0)"
+          },
+          "age": {
+            "type": "number"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "heightCm": {
+            "type": "number"
+          },
+          "weightKg": {
+            "type": "number"
+          },
+          "bodyType": {
+            "type": "string"
+          },
+          "fitnessLevel": {
+            "type": "string"
+          },
+          "bmi": {
+            "type": "number"
+          },
+          "targetCalories": {
+            "type": "number"
+          },
+          "targetProtein": {
+            "type": "number"
+          },
+          "targetCarbs": {
+            "type": "number"
+          },
+          "targetFat": {
+            "type": "number"
+          },
+          "targetFiber": {
+            "type": "number"
+          },
+          "injuries": {
+            "type": "string"
+          },
+          "dietaryPreference": {
+            "type": "string"
+          },
+          "workoutFrequencyPerWeek": {
+            "type": "number"
+          },
+          "preferredWorkoutType": {
+            "type": "string"
           }
         },
         "required": [

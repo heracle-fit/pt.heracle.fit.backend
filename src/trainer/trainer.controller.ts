@@ -6,6 +6,7 @@ import { Admin } from '../common/decorators/admin.decorator';
 import { AddClientDto } from './dto/add-client.dto';
 import { AddTrainerDto } from './dto/add-trainer.dto';
 import { ClientResponseDto } from './dto/client-response.dto';
+import { DetailedClientResponseDto } from './dto/detailed-client-response.dto';
 
 
 @ApiTags('Trainer')
@@ -20,6 +21,17 @@ export class TrainerController {
     @ApiOkResponse({ type: [ClientResponseDto] })
     async getClients(@Req() req: any): Promise<ClientResponseDto[]> {
         return this.trainerService.getClients(req.user.id);
+    }
+
+    @Get('client/:clientId')
+    @Trainer()
+    @ApiOperation({ summary: 'Get detailed data for a specific client (Trainer Only)' })
+    @ApiOkResponse({ type: DetailedClientResponseDto })
+    async getClientDetails(
+        @Req() req: any,
+        @Param('clientId') clientId: string,
+    ): Promise<DetailedClientResponseDto> {
+        return this.trainerService.getClientDetails(req.user.id, clientId);
     }
 
     @Post('clients/add')

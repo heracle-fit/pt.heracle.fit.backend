@@ -143,6 +143,73 @@ export class TrainerService {
         });
     }
 
+    async getClientDetails(trainerUserId: string, clientId: string) {
+        const trainer = await this.getTrainer(trainerUserId);
+
+        // 1. Verify client is assigned to this trainer
+        const assignment = await this.prisma.trainerClient.findUnique({
+            where: { clientId },
+            include: {
+                client: {
+                    include: {
+                        profile: true,
+                    },
+                },
+            },
+        });
+
+        if (!assignment || assignment.trainerId !== trainer.id) {
+            throw new ForbiddenException('Client is not assigned to you');
+        }
+
+        const { client } = assignment;
+        const profile = client.profile;
+
+        // 2. Fetch today's calorie progress
+        const today = new Date().toISOString().split('T')[0];
+        const clientMeals = await this.prisma.meal.findMany({
+            where: { userId: clientId, date: today },
+        });
+
+        const consumedCalories = clientMeals.reduce((acc, meal) => {
+            const foodItems = (meal.data as any) || [];
+            return acc + foodItems.reduce((sum: number, item: any) => sum + (item.calories || 0), 0);
+        }, 0);
+
+        const targetCalories = profile?.targetCalories || 0;
+        const progress = targetCalories > 0 ? Math.min(1, consumedCalories / targetCalories) : 0;
+
+        // 3. Aggregate data into detailed DTO format
+        return {
+            id: client.id,
+            name: client.name,
+            email: client.email,
+            avatarUrl: client.avatarUrl,
+            assignedAt: assignment.assignedAt,
+            goal: profile?.goal ?? null,
+            progress: Number(progress.toFixed(2)),
+            // Flattened profile data
+            age: profile?.age ?? undefined,
+            gender: profile?.gender ?? undefined,
+            heightCm: profile?.heightCm ?? undefined,
+            weightKg: profile?.weightKg ?? undefined,
+            bodyType: profile?.bodyType ?? undefined,
+            fitnessLevel: profile?.fitnessLevel ?? undefined,
+            bmi: profile?.bmi ?? undefined,
+            targetCalories: profile?.targetCalories ?? undefined,
+            targetProtein: profile?.targetProtein ?? undefined,
+            targetCarbs: profile?.targetCarbs ?? undefined,
+            targetFat: profile?.targetFat ?? undefined,
+            targetFiber: profile?.targetFiber ?? undefined,
+            injuries: profile?.injuries ?? undefined,
+            dietaryPreference: profile?.dietaryPreference ?? undefined,
+            workoutFrequencyPerWeek: profile?.workoutFrequencyPerWeek ?? undefined,
+            preferredWorkoutType: profile?.preferredWorkoutType ?? undefined,
+        };
+    }
+
+
+
     async adminAddTrainer(dto: { email: string; specialization?: string; experience?: number }) {
         const user = await this.prisma.user.findUnique({
             where: { email: dto.email },
