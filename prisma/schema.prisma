@@ -20,9 +20,10 @@ model User {
   name      String    @map("name")
   bio       String?   @map("bio")
   avatarUrl String?   @map("avatar_url")
-  email     String    @unique @map("email")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime? @map("updated_at")
+  email             String    @unique @map("email")
+  googleAccessToken String?   @map("google_access_token")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime? @map("updated_at")
 
   // relations
   profile         UserProfile?

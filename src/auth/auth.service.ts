@@ -1,13 +1,14 @@
 import { Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import * as admin from 'firebase-admin';
 
 @Injectable()
 export class AuthService {
-	private prisma = new PrismaClient();
-
-	constructor(private readonly jwtService: JwtService) { }
+	constructor(
+		private readonly jwtService: JwtService,
+		private readonly prisma: PrismaService
+	) { }
 
 	// Admin login using environment credentials
 	async adminLogin(dto: any) {
@@ -35,8 +36,15 @@ export class AuthService {
 			// create username from local-part of email, ensure uniqueness by appending random suffix if needed
 			let baseUsername = email.split('@')[0].replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 30) || 'user';
 			let username = baseUsername;
+
+			const existingUsers = await this.prisma.user.findMany({
+				where: { username: { startsWith: baseUsername } },
+				select: { username: true }
+			});
+			const existingUsernames = new Set(existingUsers.map(u => u.username));
+
 			let suffix = 0;
-			while (await this.prisma.user.findUnique({ where: { username } })) {
+			while (existingUsernames.has(username)) {
 				suffix += 1;
 				username = `${baseUsername}${suffix}`;
 			}
@@ -48,7 +56,14 @@ export class AuthService {
 					email,
 					avatarUrl: profile.photos?.[0]?.value || null,
 					bio: null,
+					googleAccessToken: profile.accessToken || null,
 				},
+			});
+		} else if (profile.accessToken && user.googleAccessToken !== profile.accessToken) {
+			// Update the access token if it's new or changed
+			user = await this.prisma.user.update({
+				where: { id: user.id },
+				data: { googleAccessToken: profile.accessToken },
 			});
 		}
 
@@ -64,7 +79,7 @@ export class AuthService {
 
 	// Verify a Firebase ID token (issued by Firebase Auth on the mobile client)
 	// and return { user, token } where token is our own JWT
-	async validateIdToken(idToken: string) {
+	async validateIdToken(idToken: string, accessToken?: string) {
 		if (!idToken) {
 			throw new UnauthorizedException('Missing idToken');
 		}
@@ -85,6 +100,7 @@ export class AuthService {
 			emails: [{ value: decodedToken.email }],
 			displayName: decodedToken.name || decodedToken.email.split('@')[0],
 			photos: decodedToken.picture ? [{ value: decodedToken.picture }] : [],
+			accessToken,
 		};
 
 		// Reuse existing logic to find-or-create user and issue our JWT

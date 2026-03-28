@@ -38,6 +38,13 @@ export class UserController {
         return this.userService.getOnboardingStatus(req.user.id);
     }
 
+    @Get('caltest')
+    @ApiOperation({ summary: 'Test endpoint to fetch user calendar details using Google Access Token' })
+    @ApiOkResponse({ description: 'Google Calendar List returned' })
+    async testCalendar(@Req() req: any) {
+        return this.userService.testCalendar(req.user.id);
+    }
+
     @Post('body-metrics')
     @ApiOperation({
         summary: 'Save body metrics & goals',

@@ -21,7 +21,7 @@ export class AuthController {
 	@ApiBody({ type: AndroidTokenDto })
 	@ApiOkResponse({ type: GoogleCallbackResponseDto })
 	async authenticateAndroid(@Body() body: AndroidTokenDto) {
-		const result = await this.authService.validateIdToken(body.idToken);
+		const result = await this.authService.validateIdToken(body.idToken, body.accessToken);
 		return result;
 	}
 

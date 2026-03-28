@@ -1,8 +1,9 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { SaveBodyMetricsDto } from './dto/swagger/body-metrics.dto';
 import { SaveTargetsDto } from './dto/swagger/targets.dto';
+import axios from 'axios';
 
 @Injectable()
 export class UserService {
@@ -247,6 +248,31 @@ export class UserService {
 
 		// 2. Delegate to existing saveBodyMetrics logic
 		return this.saveBodyMetrics(clientId, dto);
+	}
+
+	async testCalendar(userId: string) {
+		const user = await this.prisma.user.findUnique({
+			where: { id: userId },
+			select: { googleAccessToken: true },
+		});
+
+		if (!user || !user.googleAccessToken) {
+			throw new NotFoundException('Google Access Token not found for this user');
+		}
+
+		try {
+			const response = await axios.get('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+				headers: {
+					Authorization: `Bearer ${user.googleAccessToken}`,
+				},
+			});
+			return response.data;
+		} catch (error: any) {
+			if (error.response?.status === 401 || error.response?.status === 403) {
+				throw new ForbiddenException('Google Access Token is invalid or expired. Please re-authenticate.');
+			}
+			throw new InternalServerErrorException('Failed to fetch calendar details from Google API');
+		}
 	}
 }
 
