@@ -10,6 +10,7 @@ model Meal {
 
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+    @@index([userId, date])
     @@map("meals")
 }
 

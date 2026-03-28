@@ -228,22 +228,18 @@ export class UserService {
 	}
 
 	async trainerSaveBodyMetrics(trainerUserId: string, clientId: string, dto: SaveBodyMetricsDto) {
-
-		// 1. Verify trainer-client relationship
-		const trainer = await this.prisma.trainer.findUnique({
-			where: { userId: trainerUserId },
-		});
-
-		if (!trainer) {
-			throw new ForbiddenException('Trainer record not found for this user');
-		}
-
+		// 1. Verify trainer-client relationship in a single query
 		const assignment = await this.prisma.trainerClient.findUnique({
 			where: { clientId },
+			include: {
+				trainer: {
+					select: { userId: true }
+				}
+			}
 		});
 
-		if (!assignment || assignment.trainerId !== trainer.id) {
-			throw new ForbiddenException('You are not assigned to this client');
+		if (!assignment || assignment.trainer.userId !== trainerUserId) {
+			throw new ForbiddenException('You are not assigned to this client or you are not a trainer');
 		}
 
 		// 2. Delegate to existing saveBodyMetrics logic

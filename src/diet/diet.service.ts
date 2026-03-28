@@ -29,12 +29,21 @@ export class DietService {
             where: { userId, date: today },
             orderBy: { createdAt: 'desc' },
         });
-        if (existing) return existing;
 
-        // No suggestion yet — generate one from AI and persist it
-        console.log(`[DietService] No suggestion for ${today}, triggering AI generation for user ${userId}`);
-        const generated = await this.generateDietSuggestion(userId);
-        return generated ?? null;
+        if (existing) {
+            // Optional: Trigger a refresh in background if it's too old (e.g., > 1 hour)
+            // For now, just return existing
+            return existing;
+        }
+
+        // No suggestion yet — trigger generation in background and return null immediately
+        // This prevents the first GET request of the day from being slow
+        console.log(`[DietService] No suggestion for ${today}, triggering background AI generation for user ${userId}`);
+        this.generateDietSuggestion(userId).catch(err => 
+            console.error(`[DietService] Background AI generation failed for user ${userId}:`, err)
+        );
+        
+        return null;
     }
 
     async getMealsByDate(userId: string, date: string) {
@@ -165,10 +174,18 @@ export class DietService {
             },
         });
 
-        console.log("AI Suggesting...")
-        // Trigger dynamic suggestion update
-        const suggestions = await this.generateDietSuggestion(userId);
-        console.log("AI Suggestion", suggestions)
+        // Trigger dynamic suggestion update in background - DO NOT AWAIT
+        console.log(`[DietService] Triggering background AI suggestion update for user ${userId}`);
+        this.generateDietSuggestion(userId).catch(err => 
+            console.error(`[DietService] Background AI suggestion update failed for user ${userId}:`, err)
+        );
+
+        // Fetch the PREVIOUS/CURRENT latest suggestion to return immediately
+        const today = new Date().toISOString().split('T')[0];
+        const currentSuggestion = await this.prisma.dietSuggestion.findUnique({
+            where: { userId_date: { userId, date: today } }
+        });
+
         return {
             id: meal.id,
             userId: meal.userId,
@@ -176,12 +193,12 @@ export class DietService {
             date: meal.date,
             time: meal.time,
             data: meal.data as any,
-            latestSuggestion: suggestions ? {
-                id: suggestions.id,
-                suggestion: suggestions.suggestion,
-                suggestedMeal: suggestions.suggestedMeal as any,
-                date: suggestions.date,
-                createdAt: suggestions.createdAt,
+            latestSuggestion: currentSuggestion ? {
+                id: currentSuggestion.id,
+                suggestion: currentSuggestion.suggestion,
+                suggestedMeal: currentSuggestion.suggestedMeal as any,
+                date: currentSuggestion.date,
+                createdAt: currentSuggestion.createdAt,
             } : undefined,
             createdAt: meal.createdAt,
         };
@@ -306,20 +323,17 @@ export class DietService {
     }
 
     private async verifyTrainerClient(trainerUserId: string, clientId: string) {
-        const trainer = await this.prisma.trainer.findUnique({
-            where: { userId: trainerUserId },
-        });
-
-        if (!trainer) {
-            throw new ForbiddenException('Trainer record not found for this user');
-        }
-
         const assignment = await this.prisma.trainerClient.findUnique({
             where: { clientId },
+            include: {
+                trainer: {
+                    select: { userId: true }
+                }
+            }
         });
 
-        if (!assignment || assignment.trainerId !== trainer.id) {
-            throw new ForbiddenException('You are not assigned to this client');
+        if (!assignment || assignment.trainer.userId !== trainerUserId) {
+            throw new ForbiddenException('You are not assigned to this client or you are not a trainer');
         }
     }
 }

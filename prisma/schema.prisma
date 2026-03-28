@@ -147,6 +147,7 @@ model Meal {
 
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+    @@index([userId, date])
     @@map("meals")
 }
 
@@ -210,6 +211,7 @@ model Session {
     user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     workoutLogs WorkoutLog[]
 
+    @@index([userId])
     @@map("sessions")
 }
 
@@ -229,6 +231,7 @@ model WorkoutLog {
     user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     session   Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
 
+    @@index([userId])
     @@map("workout_logs")
 }
 

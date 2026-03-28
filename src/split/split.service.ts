@@ -47,22 +47,19 @@ export class SplitService {
     }
 
     private async verifyTrainerClient(trainerUserId: string, clientId: string) {
-        const trainer = await this.prisma.trainer.findUnique({
-            where: { userId: trainerUserId },
-        });
-
-        if (!trainer) {
-            throw new ForbiddenException('Trainer record not found for this user');
-        }
-
         const assignment = await this.prisma.trainerClient.findUnique({
             where: { clientId },
+            include: {
+                trainer: {
+                    select: { userId: true, id: true }
+                }
+            }
         });
 
-        if (!assignment || assignment.trainerId !== trainer.id) {
-            throw new ForbiddenException('You are not assigned to this client');
+        if (!assignment || assignment.trainer.userId !== trainerUserId) {
+            throw new ForbiddenException('You are not assigned to this client or you are not a trainer');
         }
 
-        return trainer;
+        return assignment.trainer;
     }
 }

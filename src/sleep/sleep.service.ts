@@ -79,39 +79,51 @@ export class SleepService {
 
     // If we already have an insight for today, return it
     if (sleepCycle?.SleepCycle && sleepCycle?.insightDate === today) {
-      return { insight: sleepCycle.SleepCycle };
+      return { insight: sleepCycle.SleepCycle, status: 'ready' };
     }
 
+    // No insight for today. Trigger in background and return "generating"
+    console.log(`[SleepService] No insight for ${today}, triggering background generation for user ${userId}`);
+    
+    // We wrap the generation in a way that it doesn't block
+    this.generateAndSaveInsight(userId, sleepCycle, today).catch(err => 
+      console.error(`[SleepService] Background insight generation failed for user ${userId}:`, err)
+    );
+
+    return { 
+      insight: sleepCycle?.SleepCycle || "Your sleep insight is being generated. Check back in a few seconds.", 
+      status: 'generating' 
+    };
+  }
+
+  private async generateAndSaveInsight(userId: string, sleepCycle: any, today: string) {
     const sleepData = await this.getSleepData(userId);
+    if (!sleepData.sleepData || sleepData.sleepData.length === 0) {
+      console.log(`[SleepService] No sleep data for user ${userId}, skipping insight generation.`);
+      return;
+    }
+
     const context = JSON.stringify(sleepData.sleepData);
+    const result = await runSleepInsight(this.aiService, context);
+    const insightText = result.insight;
 
-    try {
-      const result = await runSleepInsight(this.aiService, context);
-      const insightText = result.insight;
-
-      if (sleepCycle) {
-        await this.prisma.sleepCycle.update({
-          where: { id: sleepCycle.id },
-          data: {
-            SleepCycle: insightText,
-            insightDate: today,
-          },
-        });
-      } else {
-        await this.prisma.sleepCycle.create({
-          data: {
-            userId,
-            sleepData: [],
-            SleepCycle: insightText,
-            insightDate: today,
-          },
-        });
-      }
-
-      return { insight: insightText };
-    } catch (error) {
-      console.error('[SleepService] AI Insight failed:', error);
-      throw new InternalServerErrorException('Failed to generate sleep insight');
+    if (sleepCycle) {
+      await this.prisma.sleepCycle.update({
+        where: { id: sleepCycle.id },
+        data: {
+          SleepCycle: insightText,
+          insightDate: today,
+        },
+      });
+    } else {
+      await this.prisma.sleepCycle.create({
+        data: {
+          userId,
+          sleepData: [],
+          SleepCycle: insightText,
+          insightDate: today,
+        },
+      });
     }
   }
 }

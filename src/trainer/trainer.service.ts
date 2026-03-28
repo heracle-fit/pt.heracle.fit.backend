@@ -12,9 +12,15 @@ export class TrainerService {
 
         const assignments = await this.prisma.trainerClient.findMany({
             where: { trainerId: trainer.id },
-            include: {
+            select: {
+                assignedAt: true,
+                clientId: true,
                 client: {
-                    include: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatarUrl: true,
                         profile: {
                             select: {
                                 goal: true,
@@ -26,6 +32,8 @@ export class TrainerService {
             },
         });
 
+        if (assignments.length === 0) return [];
+
         const clientIds = assignments.map(a => a.clientId);
 
         // Fetch today's meals for all clients in this trainer's list to calculate progress
@@ -34,11 +42,22 @@ export class TrainerService {
                 userId: { in: clientIds },
                 date: today,
             },
+            select: {
+                userId: true,
+                data: true,
+            }
         });
+
+        // Group meals by userId for faster access
+        const mealsByClient = todayMeals.reduce((acc, meal) => {
+            if (!acc[meal.userId]) acc[meal.userId] = [];
+            acc[meal.userId].push(meal);
+            return acc;
+        }, {} as Record<string, any[]>);
 
         // Calculate progress for each client
         return assignments.map(a => {
-            const clientMeals = todayMeals.filter(m => m.userId === a.clientId);
+            const clientMeals = mealsByClient[a.clientId] || [];
             const consumedCalories = clientMeals.reduce((acc, meal) => {
                 const foodItems = (meal.data as any) || [];
                 return acc + foodItems.reduce((sum: number, item: any) => sum + (item.calories || 0), 0);
