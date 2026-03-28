@@ -15,4 +15,11 @@ export class ClientResponseDto {
 
     @ApiProperty()
     assignedAt: Date;
+
+    @ApiPropertyOptional({ example: 'weight_loss' })
+    goal: string | null;
+
+    @ApiProperty({ example: 0.75, description: "Today's progress toward nutritional targets (0.0 to 1.0)" })
+    progress: number;
 }
+

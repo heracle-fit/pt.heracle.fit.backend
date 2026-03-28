@@ -1578,6 +1578,36 @@
         ]
       }
     },
+    "/trainer/admin/add": {
+      "post": {
+        "operationId": "TrainerController_adminAddTrainer",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTrainerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Trainer added successfully"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Add a new trainer (Admin Only)",
+        "tags": [
+          "Trainer"
+        ]
+      }
+    },
     "/split": {
       "get": {
         "operationId": "SplitController_getMySplit",
@@ -3062,13 +3092,23 @@
           "assignedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "goal": {
+            "type": "object",
+            "example": "weight_loss"
+          },
+          "progress": {
+            "type": "number",
+            "example": 0.75,
+            "description": "Today's progress toward nutritional targets (0.0 to 1.0)"
           }
         },
         "required": [
           "id",
           "name",
           "email",
-          "assignedAt"
+          "assignedAt",
+          "progress"
         ]
       },
       "AddClientDto": {
@@ -3077,6 +3117,26 @@
           "email": {
             "type": "string",
             "example": "client@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "AddTrainerDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "trainer@example.com"
+          },
+          "specialization": {
+            "type": "string",
+            "example": "Strength & Conditioning"
+          },
+          "experience": {
+            "type": "number",
+            "example": 5
           }
         },
         "required": [

@@ -8,22 +8,57 @@ export class TrainerService {
 
     async getClients(trainerUserId: string): Promise<ClientResponseDto[]> {
         const trainer = await this.getTrainer(trainerUserId);
+        const today = new Date().toISOString().split('T')[0];
 
         const assignments = await this.prisma.trainerClient.findMany({
             where: { trainerId: trainer.id },
             include: {
-                client: true,
+                client: {
+                    include: {
+                        profile: {
+                            select: {
+                                goal: true,
+                                targetCalories: true,
+                            },
+                        },
+                    },
+                },
             },
         });
 
-        return assignments.map(a => ({
-            id: a.client.id,
-            name: a.client.name,
-            email: a.client.email,
-            avatarUrl: a.client.avatarUrl,
-            assignedAt: a.assignedAt,
-        }));
+        const clientIds = assignments.map(a => a.clientId);
+
+        // Fetch today's meals for all clients in this trainer's list to calculate progress
+        const todayMeals = await this.prisma.meal.findMany({
+            where: {
+                userId: { in: clientIds },
+                date: today,
+            },
+        });
+
+        // Calculate progress for each client
+        return assignments.map(a => {
+            const clientMeals = todayMeals.filter(m => m.userId === a.clientId);
+            const consumedCalories = clientMeals.reduce((acc, meal) => {
+                const foodItems = (meal.data as any) || [];
+                return acc + foodItems.reduce((sum: number, item: any) => sum + (item.calories || 0), 0);
+            }, 0);
+
+            const targetCalories = a.client.profile?.targetCalories || 0;
+            const progress = targetCalories > 0 ? Math.min(1, consumedCalories / targetCalories) : 0;
+
+            return {
+                id: a.client.id,
+                name: a.client.name,
+                email: a.client.email,
+                avatarUrl: a.client.avatarUrl,
+                assignedAt: a.assignedAt,
+                goal: a.client.profile?.goal ?? null,
+                progress: Number(progress.toFixed(2)),
+            };
+        });
     }
+
 
     async addClient(trainerUserId: string, email: string): Promise<ClientResponseDto> {
         const trainer = await this.getTrainer(trainerUserId);
@@ -48,15 +83,37 @@ export class TrainerService {
             throw new ConflictException('User is already assigned to another trainer');
         }
 
+        const today = new Date().toISOString().split('T')[0];
+
         const assignment = await this.prisma.trainerClient.create({
             data: {
                 trainerId: trainer.id,
                 clientId: clientUser.id,
             },
             include: {
-                client: true,
+                client: {
+                    include: {
+                        profile: true,
+                    },
+                },
             },
         });
+
+        // Calculate progress for the newly added client for today
+        const clientMeals = await this.prisma.meal.findMany({
+            where: {
+                userId: clientUser.id,
+                date: today,
+            },
+        });
+
+        const consumedCalories = clientMeals.reduce((acc, meal) => {
+            const foodItems = (meal.data as any) || [];
+            return acc + foodItems.reduce((sum: number, item: any) => sum + (item.calories || 0), 0);
+        }, 0);
+
+        const targetCalories = assignment.client.profile?.targetCalories || 0;
+        const progress = targetCalories > 0 ? Math.min(1, consumedCalories / targetCalories) : 0;
 
         return {
             id: assignment.client.id,
@@ -64,8 +121,11 @@ export class TrainerService {
             email: assignment.client.email,
             avatarUrl: assignment.client.avatarUrl,
             assignedAt: assignment.assignedAt,
+            goal: assignment.client.profile?.goal ?? null,
+            progress: Number(progress.toFixed(2)),
         };
     }
+
 
     async removeClient(trainerUserId: string, clientId: string): Promise<void> {
         const trainer = await this.getTrainer(trainerUserId);
