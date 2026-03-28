@@ -271,23 +271,7 @@ export class DietService {
         clientId: string,
         dto: SaveTargetsDto,
     ) {
-        // 1. Verify caller is a trainer
-        const trainer = await this.prisma.trainer.findUnique({
-            where: { userId: trainerUserId },
-        });
-
-        if (!trainer) {
-            throw new ForbiddenException('Trainer record not found for this user');
-        }
-
-        // 2. Verify trainer-client relationship
-        const assignment = await this.prisma.trainerClient.findUnique({
-            where: { clientId },
-        });
-
-        if (!assignment || assignment.trainerId !== trainer.id) {
-            throw new ForbiddenException('You are not assigned to this client');
-        }
+        await this.verifyTrainerClient(trainerUserId, clientId);
 
         // 3. Update the targets for the client in UserProfile
         return this.prisma.userProfile.update({
@@ -310,5 +294,34 @@ export class DietService {
             },
         });
     }
+
+    async trainerGetMealsByDate(trainerUserId: string, clientId: string, date: string) {
+        await this.verifyTrainerClient(trainerUserId, clientId);
+        return this.getMealsByDate(clientId, date);
+    }
+
+    async trainerGetDailyNutritionalStatus(trainerUserId: string, clientId: string, date: string) {
+        await this.verifyTrainerClient(trainerUserId, clientId);
+        return this.getDailyNutritionalStatus(clientId, date);
+    }
+
+    private async verifyTrainerClient(trainerUserId: string, clientId: string) {
+        const trainer = await this.prisma.trainer.findUnique({
+            where: { userId: trainerUserId },
+        });
+
+        if (!trainer) {
+            throw new ForbiddenException('Trainer record not found for this user');
+        }
+
+        const assignment = await this.prisma.trainerClient.findUnique({
+            where: { clientId },
+        });
+
+        if (!assignment || assignment.trainerId !== trainer.id) {
+            throw new ForbiddenException('You are not assigned to this client');
+        }
+    }
 }
+
 

@@ -35,8 +35,10 @@ model User {
   // Trainer relations
   trainerProfile  Trainer?        @relation("UserToTrainerProfile")
   trainerClient   TrainerClient?  @relation("UserClientOfTrainer")
+  workoutSplit    WorkoutSplit?
 
   @@map("users")
+
 }
 
 
@@ -52,9 +54,11 @@ model Trainer {
   
   // Relations
   clients   TrainerClient[] @relation("TrainerToTrainerClient")
+  workoutSplits WorkoutSplit[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
 
   @@map("trainers")
 }
@@ -226,6 +230,21 @@ model WorkoutLog {
 
     @@map("workout_logs")
 }
+
+model WorkoutSplit {
+    id        String   @id @default(uuid()) @map("id") @db.Uuid
+    trainerId String   @map("trainer_id") @db.Uuid
+    userId    String   @unique @map("user_id") @db.Uuid
+    splitData Json     @map("split_data") // e.g., [{ "day": "monday", "sessionId": 1 }, ...]
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    trainer Trainer @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+    user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("workout_splits")
+}
+
 
 
 model SleepCycle {

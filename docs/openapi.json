@@ -204,6 +204,39 @@
         ]
       }
     },
+    "/auth/admin/login": {
+      "post": {
+        "operationId": "AuthController_adminLogin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Admin login with username and password",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/workout/today": {
       "get": {
         "description": "Returns the recommended workout plan for today. Returns null if workout preferences are not set.",
@@ -532,6 +565,180 @@
         ]
       }
     },
+    "/workout/trainer/session/{clientId}/{sessionId}": {
+      "patch": {
+        "operationId": "WorkoutController_trainerUpdateSession",
+        "parameters": [
+          {
+            "name": "clientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSessionRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Edit a client session data (Trainer Only)",
+        "tags": [
+          "Workout"
+        ]
+      },
+      "delete": {
+        "operationId": "WorkoutController_trainerDeleteSession",
+        "parameters": [
+          {
+            "name": "clientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session deleted successfully"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Delete a client session (Trainer Only)",
+        "tags": [
+          "Workout"
+        ]
+      }
+    },
+    "/workout/trainer/session/{clientId}": {
+      "post": {
+        "operationId": "WorkoutController_trainerCreateSession",
+        "parameters": [
+          {
+            "name": "clientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Create a session for a client (Trainer Only)",
+        "tags": [
+          "Workout"
+        ]
+      }
+    },
+    "/workout/trainer/sessions/{clientId}": {
+      "get": {
+        "operationId": "WorkoutController_trainerGetSessions",
+        "parameters": [
+          {
+            "name": "clientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SessionResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get all sessions for a client (Trainer Only)",
+        "tags": [
+          "Workout"
+        ]
+      }
+    },
     "/workout/log": {
       "post": {
         "operationId": "WorkoutController_createWorkoutLog",
@@ -701,6 +908,60 @@
           }
         ],
         "summary": "Get all workout logs for the authenticated user",
+        "tags": [
+          "Workout"
+        ]
+      }
+    },
+    "/workout/trainer/log-review/{logId}": {
+      "patch": {
+        "operationId": "WorkoutController_addWorkoutLogReview",
+        "parameters": [
+          {
+            "name": "logId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "review": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "review"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkoutLogResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Add a PT review to a client workout log (Trainer Only)",
         "tags": [
           "Workout"
         ]
@@ -993,6 +1254,145 @@
         ]
       }
     },
+    "/diet/trainer/targets/{clientId}": {
+      "patch": {
+        "operationId": "DietController_trainerUpdateTargets",
+        "parameters": [
+          {
+            "name": "clientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveTargetsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Edit a client diet targets (Trainer Only)",
+        "tags": [
+          "Diet"
+        ]
+      }
+    },
+    "/diet/trainer/meals/{clientId}": {
+      "get": {
+        "operationId": "DietController_trainerGetMealsByDate",
+        "parameters": [
+          {
+            "name": "clientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Date in YYYY-MM-DD format. Defaults to today.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LogMealResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get client meals by date (Trainer Only)",
+        "tags": [
+          "Diet"
+        ]
+      }
+    },
+    "/diet/trainer/status/{clientId}": {
+      "get": {
+        "operationId": "DietController_trainerGetStatus",
+        "parameters": [
+          {
+            "name": "clientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Date in YYYY-MM-DD format. Defaults to today.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyNutritionalStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get client daily nutritional status (Trainer Only)",
+        "tags": [
+          "Diet"
+        ]
+      }
+    },
     "/sleep": {
       "post": {
         "operationId": "SleepController_addSleepData",
@@ -1081,6 +1481,209 @@
           "Sleep"
         ]
       }
+    },
+    "/trainer/clients": {
+      "get": {
+        "operationId": "TrainerController_getClients",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get all clients for the trainer",
+        "tags": [
+          "Trainer"
+        ]
+      }
+    },
+    "/trainer/clients/add": {
+      "post": {
+        "operationId": "TrainerController_addClient",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddClientDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Add a client by email",
+        "tags": [
+          "Trainer"
+        ]
+      }
+    },
+    "/trainer/clients/remove/{clientId}": {
+      "delete": {
+        "operationId": "TrainerController_removeClient",
+        "parameters": [
+          {
+            "name": "clientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client removed successfully"
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Remove a client",
+        "tags": [
+          "Trainer"
+        ]
+      }
+    },
+    "/split": {
+      "get": {
+        "operationId": "SplitController_getMySplit",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SplitResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get current user workout split",
+        "tags": [
+          "Workout Split"
+        ]
+      }
+    },
+    "/split/trainer/{clientId}": {
+      "get": {
+        "operationId": "SplitController_trainerGetClientSplit",
+        "parameters": [
+          {
+            "name": "clientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SplitResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Get a client workout split (Trainer Only)",
+        "tags": [
+          "Workout Split"
+        ]
+      },
+      "put": {
+        "operationId": "SplitController_upsertClientSplit",
+        "parameters": [
+          {
+            "name": "clientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSplitDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SplitResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Add or update a client workout split (Trainer Only)",
+        "tags": [
+          "Workout Split"
+        ]
+      }
     }
   },
   "info": {
@@ -1141,10 +1744,6 @@
             "type": "object",
             "example": "Athlete"
           },
-          "role": {
-            "type": "string",
-            "example": "Pro Member"
-          },
           "createdAt": {
             "format": "date-time",
             "type": "string",
@@ -1160,7 +1759,6 @@
           "username",
           "name",
           "email",
-          "role",
           "createdAt"
         ]
       },
@@ -1928,6 +2526,9 @@
             "format": "date-time",
             "type": "string"
           },
+          "ptReview": {
+            "type": "object"
+          },
           "updatedAt": {
             "format": "date-time",
             "type": "string"
@@ -2437,6 +3038,108 @@
         },
         "required": [
           "insight"
+        ]
+      },
+      "ClientResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-..."
+          },
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "example": "john@example.com"
+          },
+          "avatarUrl": {
+            "type": "object",
+            "example": "https://example.com/avatar.jpg"
+          },
+          "assignedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "assignedAt"
+        ]
+      },
+      "AddClientDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "client@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "SplitResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "trainerId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "splitData": {
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "trainerId",
+          "userId",
+          "splitData",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateSplitDto": {
+        "type": "object",
+        "properties": {
+          "splitData": {
+            "type": "object",
+            "example": [
+              {
+                "day": "monday",
+                "sessionId": 1
+              },
+              {
+                "day": "wednesday",
+                "sessionId": 2
+              },
+              {
+                "day": "friday",
+                "sessionId": 1
+              }
+            ],
+            "description": "Array of day-to-session mappings"
+          }
+        },
+        "required": [
+          "splitData"
         ]
       }
     }

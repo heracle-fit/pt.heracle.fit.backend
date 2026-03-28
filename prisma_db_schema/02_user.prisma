@@ -20,7 +20,9 @@ model User {
   // Trainer relations
   trainerProfile  Trainer?        @relation("UserToTrainerProfile")
   trainerClient   TrainerClient?  @relation("UserClientOfTrainer")
+  workoutSplit    WorkoutSplit?
 
   @@map("users")
+
 }
 

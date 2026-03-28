@@ -11,6 +11,7 @@ import { WorkoutModule } from './workout/workout.module';
 import { DietModule } from './diet/diet.module';
 import { SleepModule } from './sleep/sleep.module';
 import { TrainerModule } from './trainer/trainer.module';
+import { SplitModule } from './split/split.module';
 
 @Module({
   imports: [
@@ -22,9 +23,11 @@ import { TrainerModule } from './trainer/trainer.module';
     DietModule,
     SleepModule,
     TrainerModule,
+    SplitModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule { }
+
 

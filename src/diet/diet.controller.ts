@@ -150,5 +150,34 @@ export class DietController {
     ) {
         return this.dietService.trainerUpdateTargets(req.user.id, clientId, body);
     }
+
+    @Get('trainer/meals/:clientId')
+    @Trainer()
+    @ApiOperation({ summary: 'Get client meals by date (Trainer Only)' })
+    @ApiQuery({ name: 'date', required: false, description: 'Date in YYYY-MM-DD format. Defaults to today.' })
+    @ApiOkResponse({ type: [LogMealResponseDto] })
+    async trainerGetMealsByDate(
+        @Req() req: any,
+        @Param('clientId') clientId: string,
+        @Query('date') date?: string,
+    ) {
+        const targetDate = date ?? new Date().toISOString().split('T')[0];
+        return this.dietService.trainerGetMealsByDate(req.user.id, clientId, targetDate);
+    }
+
+    @Get('trainer/status/:clientId')
+    @Trainer()
+    @ApiOperation({ summary: 'Get client daily nutritional status (Trainer Only)' })
+    @ApiQuery({ name: 'date', required: false, description: 'Date in YYYY-MM-DD format. Defaults to today.' })
+    @ApiOkResponse({ type: DailyNutritionalStatusDto })
+    async trainerGetStatus(
+        @Req() req: any,
+        @Param('clientId') clientId: string,
+        @Query('date') date?: string,
+    ) {
+        const targetDate = date ?? new Date().toISOString().split('T')[0];
+        return this.dietService.trainerGetDailyNutritionalStatus(req.user.id, clientId, targetDate);
+    }
 }
+
 
