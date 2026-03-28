@@ -83,7 +83,37 @@ export class TrainerService {
         });
     }
 
+    async adminAddTrainer(dto: { email: string; specialization?: string; experience?: number }) {
+        const user = await this.prisma.user.findUnique({
+            where: { email: dto.email },
+        });
+
+        if (!user) {
+            throw new NotFoundException(`User with email ${dto.email} not found`);
+        }
+
+        const existingTrainer = await this.prisma.trainer.findUnique({
+            where: { userId: user.id },
+        });
+
+        if (existingTrainer) {
+            throw new ConflictException('User is already a trainer');
+        }
+
+        return this.prisma.trainer.create({
+            data: {
+                userId: user.id,
+                specialization: dto.specialization,
+                experience: dto.experience,
+            },
+            include: {
+                user: true,
+            },
+        });
+    }
+
     private async getTrainer(userId: string) {
+
         const trainer = await this.prisma.trainer.findUnique({
             where: { userId },
         });
