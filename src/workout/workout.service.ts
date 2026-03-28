@@ -518,6 +518,12 @@ export class WorkoutService {
         });
     }
 
+    async trainerGetWorkoutLogs(trainerUserId: string, clientId: string): Promise<WorkoutLogResponseDto[]> {
+        await this.verifyTrainerClient(trainerUserId, clientId);
+        return this.getWorkoutLogs(clientId);
+    }
+
+
     async trainerAddWorkoutLogReview(
         trainerUserId: string,
         logId: number,

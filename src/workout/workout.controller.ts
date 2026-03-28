@@ -208,6 +208,18 @@ export class WorkoutController {
         return this.workoutService.deleteWorkoutLog(req.user.id, +id);
     }
 
+    @Get('trainer/logs/:clientId')
+    @Trainer()
+    @ApiOperation({ summary: 'Get all workout logs for a client (Trainer Only)' })
+    @ApiOkResponse({ type: [WorkoutLogResponseDto] })
+    async trainerGetWorkoutLogs(
+        @Req() req: any,
+        @Param('clientId') clientId: string,
+    ): Promise<WorkoutLogResponseDto[]> {
+        return this.workoutService.trainerGetWorkoutLogs(req.user.id, clientId);
+    }
+
+
     @Patch('trainer/log-review/:logId')
     @Trainer()
     @ApiOperation({ summary: 'Add a PT review to a client workout log (Trainer Only)' })
