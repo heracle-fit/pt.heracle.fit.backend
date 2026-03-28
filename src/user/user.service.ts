@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+
 import { PrismaService } from '../prisma/prisma.service';
 import { SaveBodyMetricsDto } from './dto/swagger/body-metrics.dto';
 import { SaveTargetsDto } from './dto/swagger/targets.dto';
@@ -224,5 +225,29 @@ export class UserService {
 			},
 		});
 	}
+
+	async trainerSaveBodyMetrics(trainerUserId: string, clientId: string, dto: SaveBodyMetricsDto) {
+
+		// 1. Verify trainer-client relationship
+		const trainer = await this.prisma.trainer.findUnique({
+			where: { userId: trainerUserId },
+		});
+
+		if (!trainer) {
+			throw new ForbiddenException('Trainer record not found for this user');
+		}
+
+		const assignment = await this.prisma.trainerClient.findUnique({
+			where: { clientId },
+		});
+
+		if (!assignment || assignment.trainerId !== trainer.id) {
+			throw new ForbiddenException('You are not assigned to this client');
+		}
+
+		// 2. Delegate to existing saveBodyMetrics logic
+		return this.saveBodyMetrics(clientId, dto);
+	}
 }
+
 

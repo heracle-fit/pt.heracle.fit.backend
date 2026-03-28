@@ -171,6 +171,53 @@
         ]
       }
     },
+    "/user/trainer/body-metrics/{clientId}": {
+      "patch": {
+        "operationId": "UserController_trainerSaveBodyMetrics",
+        "parameters": [
+          {
+            "name": "clientId",
+            "required": true,
+            "in": "path",
+            "description": "The UUID of the client",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveBodyMetricsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyMetricsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "summary": "Update client body metrics (Trainer Only)",
+        "tags": [
+          "User"
+        ]
+      }
+    },
     "/auth/google/token": {
       "post": {
         "description": "For mobile clients to authenticate using Google ID token",

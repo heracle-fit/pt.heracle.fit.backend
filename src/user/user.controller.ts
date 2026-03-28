@@ -1,10 +1,12 @@
-import { Body, Controller, Get, Param, Post, Req, NotFoundException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiOkResponse, ApiNotFoundResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post, Patch, Req, NotFoundException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiOkResponse, ApiNotFoundResponse, ApiBearerAuth, ApiBody, ApiParam } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { GetByUsernameResponseDto, ProfileResponseDto } from './dto';
 import { BodyMetricsResponseDto, SaveBodyMetricsDto } from './dto/swagger/body-metrics.dto';
 import { SaveTargetsDto, TargetsResponseDto } from './dto/swagger/targets.dto';
 import { OnboardingStatusDto } from './dto/swagger/onboarding-status.dto';
+import { Trainer } from '../common/decorators/trainer.decorator';
+
 
 @ApiTags('User')
 @ApiBearerAuth('JWT')
@@ -58,5 +60,19 @@ export class UserController {
         return this.userService.saveTargets(req.user.id, body);
     }
 
+    @Patch('trainer/body-metrics/:clientId')
+    @Trainer()
+    @ApiOperation({ summary: 'Update client body metrics (Trainer Only)' })
+    @ApiParam({ name: 'clientId', description: 'The UUID of the client' })
+    @ApiBody({ type: SaveBodyMetricsDto })
+    @ApiOkResponse({ type: BodyMetricsResponseDto })
+    async trainerSaveBodyMetrics(
+        @Req() req: any,
+        @Param('clientId') clientId: string,
+        @Body() body: SaveBodyMetricsDto,
+    ) {
+        return this.userService.trainerSaveBodyMetrics(req.user.id, clientId, body);
+    }
 }
+
 
