@@ -1,0 +1,30 @@
+# Binaries
+/heracle-server
+/pt.heracle.fit.go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Go
+vendor/
+/tmp/
+
+# Logs
+*.log

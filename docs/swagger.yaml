@@ -1,0 +1,1696 @@
+basePath: /
+definitions:
+  service.CreateSessionRequest:
+    type: object
+  service.CreateWorkoutLogRequest:
+    type: object
+  service.LogMealRequest:
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Backend API for the Heracle personal training & fitness platform.
+  title: Heracle Fitness API
+  version: "1.0"
+paths:
+  /auth/admin/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates admin with username and password
+      parameters:
+      - description: Admin credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Admin user and JWT token
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Admin login
+      tags:
+      - Auth
+  /auth/dev/token:
+    get:
+      description: Creates or retrieves a user by email and returns a JWT (dev only)
+      parameters:
+      - default: sanjaysagar.main@gmail.com
+        description: Email address
+        in: query
+        name: email
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User object and JWT token
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get development token
+      tags:
+      - Auth
+  /auth/google/token:
+    post:
+      consumes:
+      - application/json
+      description: Verifies a Firebase ID token and creates or retrieves the user
+      parameters:
+      - description: Google auth payload
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User object and JWT token
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Invalid token
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Authenticate with Google ID token
+      tags:
+      - Auth
+  /diet/ai/food:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Analyses food from an image and/or text description using AI
+      parameters:
+      - description: Text description of the food
+        in: formData
+        name: description
+        type: string
+      - description: Image of the food
+        in: formData
+        name: image
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Food analysis result
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Missing input or AI error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Analyse food with AI
+      tags:
+      - Diet
+  /diet/food/search:
+    get:
+      description: Searches the food database by name
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Matching food items
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Search food items
+      tags:
+      - Diet
+  /diet/meal:
+    post:
+      consumes:
+      - application/json
+      description: Logs a meal entry and triggers background AI diet suggestion regeneration
+      parameters:
+      - description: Meal data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.LogMealRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logged meal
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Log a meal
+      tags:
+      - Diet
+  /diet/meals:
+    get:
+      description: Returns all logged meals for the authenticated user on a specific
+        date
+      parameters:
+      - default: today
+        description: Date in YYYY-MM-DD format
+        in: query
+        name: date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meals for the date
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get meals by date
+      tags:
+      - Diet
+  /diet/preferences:
+    get:
+      description: Returns diet preferences for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Diet preferences
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get diet preferences
+      tags:
+      - Diet
+    post:
+      consumes:
+      - application/json
+      description: Saves or updates diet preferences for the authenticated user
+      parameters:
+      - description: Diet preferences
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated preferences
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Save diet preferences
+      tags:
+      - Diet
+  /diet/status:
+    get:
+      description: Returns target vs consumed macros for a given date
+      parameters:
+      - default: today
+        description: Date in YYYY-MM-DD format
+        in: query
+        name: date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Nutritional status with targets and consumed
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get daily nutritional status
+      tags:
+      - Diet
+  /diet/today:
+    get:
+      description: Returns the AI-generated diet suggestion for today, generating
+        one if none exists
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Diet suggestion
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get today's diet suggestion
+      tags:
+      - Diet
+  /diet/trainer/meals/{clientId}:
+    get:
+      description: Returns all logged meals for a client on a specific date
+      parameters:
+      - description: Client user ID
+        in: path
+        name: clientId
+        required: true
+        type: string
+      - default: today
+        description: Date in YYYY-MM-DD format
+        in: query
+        name: date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Client meals
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "403":
+          description: Not authorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 'Trainer: get client meals by date'
+      tags:
+      - Diet
+  /diet/trainer/status/{clientId}:
+    get:
+      description: Returns target vs consumed macros for a client on a specific date
+      parameters:
+      - description: Client user ID
+        in: path
+        name: clientId
+        required: true
+        type: string
+      - default: today
+        description: Date in YYYY-MM-DD format
+        in: query
+        name: date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Client nutritional status
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Not authorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 'Trainer: get client nutritional status'
+      tags:
+      - Diet
+  /diet/trainer/targets/{clientId}:
+    patch:
+      consumes:
+      - application/json
+      description: Allows a trainer to update nutritional targets for their assigned
+        client
+      parameters:
+      - description: Client user ID
+        in: path
+        name: clientId
+        required: true
+        type: string
+      - description: Target data
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated targets
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Not authorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 'Trainer: update client targets'
+      tags:
+      - Diet
+  /sleep/:
+    get:
+      description: Returns the last 7 sleep data entries for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Sleep data
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get sleep data
+      tags:
+      - Sleep
+    post:
+      consumes:
+      - application/json
+      description: Adds a new sleep data entry for the authenticated user (keeps last
+        7 entries)
+      parameters:
+      - description: Sleep data entry
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated sleep record
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add sleep data
+      tags:
+      - Sleep
+  /sleep/insight:
+    get:
+      description: Returns an AI-generated insight based on recent sleep data (cached
+        daily)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: AI insight
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get AI sleep insight
+      tags:
+      - Sleep
+  /split/:
+    get:
+      description: Returns the workout split assigned to the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Workout split
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Split not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get my workout split
+      tags:
+      - Split
+  /split/trainer/{clientId}:
+    get:
+      description: Returns the workout split for a trainer's assigned client
+      parameters:
+      - description: Client user ID
+        in: path
+        name: clientId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Client workout split
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Not authorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Split not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 'Trainer: get client workout split'
+      tags:
+      - Split
+    put:
+      consumes:
+      - application/json
+      description: Creates or updates the workout split for a trainer's assigned client
+      parameters:
+      - description: Client user ID
+        in: path
+        name: clientId
+        required: true
+        type: string
+      - description: Split data
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Upserted workout split
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Not authorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 'Trainer: create or update client workout split'
+      tags:
+      - Split
+  /trainer/admin/add:
+    post:
+      consumes:
+      - application/json
+      description: Promotes an existing user to trainer role (admin only)
+      parameters:
+      - description: Trainer details
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Created trainer with user info
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Already a trainer
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 'Admin: add a trainer'
+      tags:
+      - Trainer
+  /trainer/client/{clientId}:
+    get:
+      description: Returns detailed profile, metrics, and progress for a specific
+        client
+      parameters:
+      - description: Client user ID
+        in: path
+        name: clientId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Client details
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Not authorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Client not found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get client details
+      tags:
+      - Trainer
+  /trainer/clients:
+    get:
+      description: Returns all clients assigned to the trainer with daily progress
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Client list with progress
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "403":
+          description: Trainer not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get trainer's clients
+      tags:
+      - Trainer
+  /trainer/clients/add:
+    post:
+      consumes:
+      - application/json
+      description: Assigns a user as a client to the trainer by email
+      parameters:
+      - description: Client email
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Added client with progress
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Trainer not found
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Already assigned
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add a client
+      tags:
+      - Trainer
+  /trainer/clients/remove/{clientId}:
+    delete:
+      description: Removes a client assignment from the trainer
+      parameters:
+      - description: Client user ID
+        in: path
+        name: clientId
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Removed
+        "403":
+          description: Not authorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Remove a client
+      tags:
+      - Trainer
+  /user/body-metrics:
+    get:
+      description: Returns the current body metrics for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Body metrics
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get body metrics
+      tags:
+      - User
+    post:
+      consumes:
+      - application/json
+      description: Saves or updates body metrics for the authenticated user. Automatically
+        calculates BMI, maintenance calories, and macro targets.
+      parameters:
+      - description: Body metrics data
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated body metrics
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Save body metrics
+      tags:
+      - User
+  /user/caltest:
+    get:
+      description: Fetches the Google Calendar list for the authenticated user using
+        their stored access token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Google Calendar list
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Token expired
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: User or token not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Test Google Calendar
+      tags:
+      - User
+  /user/onboarding-status:
+    get:
+      description: Returns the onboarding completion status for the authenticated
+        user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Onboarding status
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get onboarding status
+      tags:
+      - User
+  /user/profile:
+    get:
+      description: Returns the authenticated user's profile with full details
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - User
+  /user/targets:
+    post:
+      consumes:
+      - application/json
+      description: Saves or updates nutritional targets (calories, macros) for the
+        authenticated user
+      parameters:
+      - description: Target data
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated targets
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Save nutritional targets
+      tags:
+      - User
+  /user/trainer/body-metrics/{clientId}:
+    patch:
+      consumes:
+      - application/json
+      description: Allows a trainer to save or update body metrics for their assigned
+        client
+      parameters:
+      - description: Client user ID
+        in: path
+        name: clientId
+        required: true
+        type: string
+      - description: Body metrics data
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated body metrics
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Not authorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 'Trainer: save client body metrics'
+      tags:
+      - User
+  /workout/exercises:
+    get:
+      description: Returns the full exercise library with image URLs
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Exercise list
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all exercises
+      tags:
+      - Workout
+  /workout/log:
+    post:
+      consumes:
+      - application/json
+      description: Logs a completed workout for the authenticated user
+      parameters:
+      - description: Workout log data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateWorkoutLogRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Created workout log
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a workout log
+      tags:
+      - Workout
+  /workout/log/{id}:
+    delete:
+      description: Deletes a workout log by ID
+      parameters:
+      - description: Workout log ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: Deleted
+        "404":
+          description: Log not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a workout log
+      tags:
+      - Workout
+    get:
+      description: Returns a specific workout log by ID
+      parameters:
+      - description: Workout log ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Workout log
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Log not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a workout log
+      tags:
+      - Workout
+    patch:
+      consumes:
+      - application/json
+      description: Updates an existing workout log by ID
+      parameters:
+      - description: Workout log ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated workout log
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Log not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a workout log
+      tags:
+      - Workout
+  /workout/logs:
+    get:
+      description: Returns all workout logs for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Workout logs
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all workout logs
+      tags:
+      - Workout
+  /workout/my-sessions:
+    get:
+      description: Returns all custom workout sessions for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User sessions
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user's workout sessions
+      tags:
+      - Workout
+  /workout/preferences:
+    get:
+      description: Returns workout preferences for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Workout preferences
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get workout preferences
+      tags:
+      - Workout
+    post:
+      consumes:
+      - application/json
+      description: Saves or updates workout preferences for the authenticated user
+      parameters:
+      - description: Workout preferences
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated preferences
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Save workout preferences
+      tags:
+      - Workout
+  /workout/session:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new custom workout session for the authenticated user
+      parameters:
+      - description: Session data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Created session
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a workout session
+      tags:
+      - Workout
+  /workout/session/{id}:
+    delete:
+      description: Deletes a workout session by ID
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: Deleted
+        "404":
+          description: Session not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a workout session
+      tags:
+      - Workout
+    get:
+      description: Returns a specific workout session by ID
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Session details
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Session not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get a workout session
+      tags:
+      - Workout
+    patch:
+      consumes:
+      - application/json
+      description: Updates an existing workout session by ID
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated session
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Session not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a workout session
+      tags:
+      - Workout
+  /workout/sessions:
+    get:
+      description: Returns hardcoded sample workout sessions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Static sessions
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get static workout sessions
+      tags:
+      - Workout
+  /workout/today:
+    get:
+      description: Returns a workout suggestion based on user preferences
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Workout suggestion
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get today's workout suggestion
+      tags:
+      - Workout
+  /workout/trainer/log-review/{logId}:
+    patch:
+      consumes:
+      - application/json
+      description: Allows a trainer to add a review to their client's workout log
+      parameters:
+      - description: Workout log ID
+        in: path
+        name: logId
+        required: true
+        type: integer
+      - description: Review data
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated workout log with review
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Not authorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Log not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 'Trainer: add review to workout log'
+      tags:
+      - Workout
+  /workout/trainer/session/{clientId}:
+    post:
+      consumes:
+      - application/json
+      description: Allows a trainer to create a workout session for their assigned
+        client
+      parameters:
+      - description: Client user ID
+        in: path
+        name: clientId
+        required: true
+        type: string
+      - description: Session data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Created session
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Not authorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 'Trainer: create client session'
+      tags:
+      - Workout
+  /workout/trainer/session/{clientId}/{sessionId}:
+    delete:
+      description: Allows a trainer to delete a workout session for their assigned
+        client
+      parameters:
+      - description: Client user ID
+        in: path
+        name: clientId
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: Deleted
+        "403":
+          description: Not authorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Session not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 'Trainer: delete client session'
+      tags:
+      - Workout
+    patch:
+      consumes:
+      - application/json
+      description: Allows a trainer to update a workout session for their assigned
+        client
+      parameters:
+      - description: Client user ID
+        in: path
+        name: clientId
+        required: true
+        type: string
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: integer
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated session
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Not authorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Session not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 'Trainer: update client session'
+      tags:
+      - Workout
+  /workout/trainer/sessions/{clientId}:
+    get:
+      description: Returns all workout sessions for a trainer's assigned client
+      parameters:
+      - description: Client user ID
+        in: path
+        name: clientId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Client sessions
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+        "403":
+          description: Not authorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 'Trainer: get client sessions'
+      tags:
+      - Workout
+securityDefinitions:
+  BearerAuth:
+    description: 'JWT Bearer token. Format: "Bearer {token}"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
